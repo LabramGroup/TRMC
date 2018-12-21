@@ -1,0 +1,6 @@
+README.md
+setup.py
+trmc.egg-info/PKG-INFO
+trmc.egg-info/SOURCES.txt
+trmc.egg-info/dependency_links.txt
+trmc.egg-info/top_level.txt
