@@ -1,3 +1,3 @@
-__all__ = ['load','kin']
+__all__ = ['load','kin','analysis']
 
 from trmc import *
