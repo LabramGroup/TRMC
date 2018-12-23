@@ -4,6 +4,7 @@ import re
 
 
 def read_params(filepath):
+    """Read the amplification and background voltage from the header of a file"""
     params = pd.read_csv(filepath, nrows = 11, usecols = [1])
     params = params.transpose()
     amp = float(params['Amplification'][0]) # Is amplification already taken into account?
@@ -14,7 +15,8 @@ def read_params(filepath):
     back_V = float(back_V[:len(back_V)-1])*scale # remove mV or uV and scale appropriately
     return amp, back_V
 
-def read_trace(filepath,offsettime = None):
+def load_trace(filepath,offsettime = None):
+    """load in a single trace csv file"""
     temp = pd.read_csv(filepath, skiprows = 13, index_col=0)
     volt = temp['Voltage (V)']
     if offsettime is not None:
@@ -25,7 +27,7 @@ def read_trace(filepath,offsettime = None):
 
 def load_fluencesweep(filepaths, offsettime = None, sub_lowpow = False):
     """
-    Load in a csv set of flucence sweep data
+    Load in a csv set of flucence sweep data. This sets columns to fluence values which is not tidy data and should be changed.
 
     offsettime - takes an average of the data between 0 and offsettime and subtracts that from the data
     sub_lowpow - subtracts the low power trace from all datasets
