@@ -2,9 +2,9 @@
 data analysis for the TRMC instrument in the Labram Lab at OSU
 
 
-### Python modules
+### trmc python package
 
-To use the python package:
+To install the python package:
 
 1. Navigate to TRMC directory in anaconda prompt
 2. enter `python setup.py install`
@@ -12,4 +12,6 @@ To use the python package:
 
 kin - numerical modeling of decay curves
 
-trmc - load in and process trmc data
+load - load in trmc data
+
+analysis - process trmc data
