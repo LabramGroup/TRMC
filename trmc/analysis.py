@@ -91,12 +91,32 @@ def fit_lor(sweep, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf]), wind
     minidx = ydata.argmin()
     minfreq = xdata[minidx]
 
-    sl = slice(minidx-window,minidx+window)
+    sl = slice(minidx-window,minidx+window+1)
     popt,popc = scipy.optimize.curve_fit(lor,xdata[sl],ydata[sl], p0 , bounds = bounds)
 
     return popt, sl
 
-def fit_poly(sweep, window = 105, order = 3):
+def poly2(x,c0,c1,c2):
+    return c0 + c1*x + c2*x**2
+    
+def poly2fn(c0,c1,c2):
+    def fn(x):
+        return poly2(x,c0,c1,c2)
+    return fn
+
+def fit_poly2(sweep, p0, bounds = ([0,0,0],[np.inf,np.inf,np.inf]), window = 105):
+    """Fits to a polynomial and returns fit function and parameters"""
+    xdata = sweep.index.values
+    ydata = sweep.values
+
+    minidx = ydata.argmin()
+    minfreq = xdata[minidx]
+
+    sl = slice(minidx-window,minidx+window)
+    popt,popc = scipy.optimize.curve_fit(poly,xdata[sl],ydata[sl], p0 , bounds = bounds)
+    return popt, sl
+
+def fit_poly_np(sweep, window = 105, order = 3):
     """Fits to a polynomial and returns fit function and parameters"""
     xdata = sweep.index.values
     ydata = sweep.values
@@ -113,6 +133,9 @@ def fit_poly(sweep, window = 105, order = 3):
     return fit_func, p, sl
 
 
+
+
+
 def polymin(v0,v0_sl, fit):
     """Returns the minimum of a fit functon within the window defined by v0[v0_sl]"""
     f = np.linspace(v0.index[v0_sl][0],v0.index[v0_sl][-1],num = 1000)
@@ -121,15 +144,4 @@ def polymin(v0,v0_sl, fit):
     minf = f[fitdata.argmin()]
     return minR, minf
 
-def fitsweep(v, p0, window, fittype, p_labels):
-    if fittype == 'lor':
-        epsilon = 0.00001
-        v_p, v_sl = fit_lor(v, p0,bounds = ([0,0,0, Rinf - epsilon],[np.inf,np.inf,np.inf, Rinf + epsilon]), window = window)
-        v_fit = analysis.lorfn(*v_p)
 
-    elif fittype == 'poly':
-        v_fit, v_p, v_sl = fit_poly(v, window = window, order = 2)
-        minR, minf = polymin(v, v_sl, v_fit)
-        v_p = [minR, minf, *v_p]
-
-    return v_fit, v_sl, v_p
