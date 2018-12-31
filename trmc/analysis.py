@@ -1,3 +1,4 @@
+import scipy.optimize
 import pandas as pd
 import numpy as np
 import re
@@ -23,16 +24,6 @@ def maxG_and_fom(df_cond, params):
         fom[fluence] =  maxG[fluence]/(beta*e*fluence*FA*M)
 
     return maxG, fom
-
-def lorfn(f0,w,R0, Rinf): 
-    """retruns a lorentzian function defined by parameters"""
-    def fn(f):
-        return lor(f,f0,w,R0, Rinf)
-    return fn 
-
-def lor(f,f0,w,R0, Rinf): 
-    return (R0 + Rinf*(2*(f-f0)/w)**2)/(1 + (2*(f-f0)/w)**2)
-
 
 def offsettime(df, timebefore = 0, timeafter = None):
     """remove all data 'timebefore' before the max of the dataframe, then move the max to zero time"""
@@ -81,7 +72,64 @@ def calc_K(f0,w,R0, printparams = False):
         print('K: ', "{:.2E}".format(K))
     return K
 
-if __name__ == '__main__':
-    filepaths_A = ['C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=01_Fluence=6.45E+14_data.csv','C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=02_Fluence=5.121E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=03_Fluence=4.07E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=04_Fluence=3.231E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=05_Fluence=2.567E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=06_Fluence=2.038E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=07_Fluence=1.619E+14_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=08_Fluence=6.45E+13_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=09_Fluence=3.231E+13_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=10_Fluence=6.45E+12_data.csv', 'C:\\Users\\aspit\\OneDrive\\Data\\TRMC\\Gratzel\\Sample A\\Data\\High_Power_Filter=11_Fluence=6.45E+11_data.csv']
-    df_A_V, df_A_cond = load(filepaths_A, offsettime = 50e-9, sub_lowpow = True)
-    print(df_A_V)
+
+def lorfn(f0,w,R0, Rinf): 
+    """retruns a lorentzian function defined by parameters"""
+    def fn(f):
+        return lor(f,f0,w,R0, Rinf)
+    return fn 
+
+def lor(f,f0,w,R0, Rinf): 
+    return (R0 + Rinf*(2*(f-f0)/w)**2)/(1 + (2*(f-f0)/w)**2)
+
+
+def fit_lor(sweep, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf]), window = 105):
+    """Fits to lorentzian function and returns parameters"""
+    xdata = sweep.index.values
+    ydata = sweep.values
+
+    minidx = ydata.argmin()
+    minfreq = xdata[minidx]
+
+    sl = slice(minidx-window,minidx+window)
+    popt,popc = scipy.optimize.curve_fit(lor,xdata[sl],ydata[sl], p0 , bounds = bounds)
+
+    return popt, sl
+
+def fit_poly(sweep, window = 105, order = 3):
+    """Fits to a polynomial and returns fit function and parameters"""
+    xdata = sweep.index.values
+    ydata = sweep.values
+
+    minidx = ydata.argmin()
+    minfreq = xdata[minidx]
+
+    bounds = ([0,0,0],[np.inf,np.inf,np.inf])
+
+    sl = slice(minidx-window,minidx+window)
+    p = np.polyfit(xdata[sl],ydata[sl], order)
+    fit_func = np.poly1d(p)
+
+    return fit_func, p, sl
+
+
+def polymin(v0,v0_sl, fit):
+    """Returns the minimum of a fit functon within the window defined by v0[v0_sl]"""
+    f = np.linspace(v0.index[v0_sl][0],v0.index[v0_sl][-1],num = 1000)
+    fitdata = fit(f)
+    minR = fitdata.min()
+    minf = f[fitdata.argmin()]
+    return minR, minf
+
+def fitsweep(v, p0, window, fittype, p_labels):
+    if fittype == 'lor':
+        epsilon = 0.00001
+        v_p, v_sl = fit_lor(v, p0,bounds = ([0,0,0, Rinf - epsilon],[np.inf,np.inf,np.inf, Rinf + epsilon]), window = window)
+        v_fit = analysis.lorfn(*v_p)
+
+    elif fittype == 'poly':
+        v_fit, v_p, v_sl = fit_poly(v, window = window, order = 2)
+        minR, minf = polymin(v, v_sl, v_fit)
+        v_p = [minR, minf, *v_p]
+
+    return v_fit, v_sl, v_p
