@@ -32,7 +32,7 @@ def freqfluence_flist(direc):
     folders = os.listdir(direc)
     miarray = []
     folder_re = '^(\d+\.\d+)GHz_(.+?)'
-    file_re = 'FF_Filter=\d+_Fluence=(.+?)_data.csv'
+    file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv'
 
     flist = []
 
@@ -43,17 +43,17 @@ def freqfluence_flist(direc):
         folderpath = os.path.join(direc,folder)
         files = os.listdir(folderpath)
         for file in files:
-            if file[0] == 'F':
-                m_file = re.search(file_re, file)
-                fluence = float(m_file.groups(0)[0])
+            #if file[0] == 'F':
+            m_file = re.search(file_re, file)
+            fluence = float(m_file.groups(0)[0])
 
-                fp = os.path.join(folderpath,file)
+            fp = os.path.join(folderpath,file)
 
-                miarray.append((direction,freq,fluence))
-                flist.append(fp)
+            miarray.append((direction,freq,fluence))
+            flist.append(fp)
 
 
-    mi = pd.MultiIndex.from_tuples(miarray)
+    mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq','fluence'])
 
     s_fps = pd.Series(flist, index = mi)
     
@@ -73,7 +73,7 @@ def freqfluence_load(s_fps):
         for time in time_arr:
             miarray_t.append((*tup,time))
 
-    mi_t = pd.MultiIndex.from_tuples(miarray_t, names = ['Direction','Frequency','Fluence','Time'])    
+    mi_t = pd.MultiIndex.from_tuples(miarray_t, names = ['direction','freq','fluence','time'])    
     
     data = np.zeros([len(direcs)*len(freqs)*len(fluences),len(time_arr)])
 

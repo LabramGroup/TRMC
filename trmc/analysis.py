@@ -83,10 +83,10 @@ def lor(f,f0,w,R0, Rinf):
     return (R0 + Rinf*(2*(f-f0)/w)**2)/(1 + (2*(f-f0)/w)**2)
 
 
-def fit_lor(sweep, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf]), window = 105):
+def fit_lor(xdata,ydata, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf]), window = 105):
     """Fits to lorentzian function and returns parameters"""
-    xdata = sweep.index.values
-    ydata = sweep.values
+    #xdata = sweep.index.values
+    #ydata = sweep.values
 
     minidx = ydata.argmin()
     minfreq = xdata[minidx]
