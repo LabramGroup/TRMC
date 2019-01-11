@@ -41,13 +41,15 @@ def freqfluence_flist(direc):
         freq = float(m_folder.groups(0)[0])*1e9
         direction = m_folder.groups(0)[1]
         folderpath = os.path.join(direc,folder)
-        files = os.listdir(folderpath)
-        for file in files:
+        fns = os.listdir(folderpath)
+        for fn in fns:
             #if file[0] == 'F':
-            m_file = re.search(file_re, file)
+            m_file = re.search(file_re, fn)
+            if m_file is None:
+                print("no match for file " + fn)
             fluence = float(m_file.groups(0)[0])
 
-            fp = os.path.join(folderpath,file)
+            fp = os.path.join(folderpath,fn)
 
             miarray.append((direction,freq,fluence))
             flist.append(fp)
