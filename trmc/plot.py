@@ -76,4 +76,44 @@ def absplot(dvs):
     ax.xaxis.set_major_formatter(FuncFormatter(expf.format_func))
     return fig, ax
 
+def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
+    timesel = timesel *1e-9
+    if fits is not None:
+        times = fits.indexes['time']
+        sample = fits.sample.values
+    elif vss is not None:
+        times = vss.indexes['time']
+        sample = vss.sample.values
+    
+    timesel = min(times, key=lambda x:abs(x-timesel))
 
+    fig, axes = plt.subplots(2,1, figsize = (7,10), sharex = True)
+    axes[0].axhline(0, color = 'gray', linestyle = '--')
+    axes[0].plot(dvs.loc[:,timesel].to_series(), marker = 'o')
+
+    if v0 is not None:
+        v0 = v0.to_series()
+        axes[1].plot(v0, label = 'cavity sweep', marker = 'o')
+        axes[1].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
+        axes[0].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
+    if v0_fit is not None:
+        axes[1].plot(v0_fit.to_series(), label = 'cavity sweep fit')
+        
+    
+    if vss is not None:
+        axes[1].plot(vss.loc[:,timesel].to_series(), color = 'r', label = 'cavity sweep + deltaV' ,  marker = 'o')
+#         print(vss.loc[:,timesel].to_series())
+    if fits is not None:
+        axes[1].plot(fits.loc[:,timesel].to_series(), label = 'cavity sweep + deltaV fit')
+#         print(fits.loc[:,timesel].to_series())
+
+    axes[0].set_ylabel('Delta V (V)')
+    axes[1].set_ylabel('$V_r$ (V)')
+    axes[1].set_xlabel('Frequency (Hz)')
+
+    # axes[1].set_xlim([8.525e9,8.545e9])
+    # axes[1].set_ylim([0.4,0.8])
+
+    fig.suptitle('Delta V taken at ' + str(timesel) + 's for sample ' + str(sample))
+    
+    return fig, axes

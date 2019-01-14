@@ -94,8 +94,10 @@ def freqfluence_load(s_fps):
             data[i,:] = lp - lp
         else:
             d = load_trace(fp,50e-9).values
-
-            data[i,:] = d - lp
+            try:
+                data[i,:] = d - lp
+            except:
+                print('subtraction failed for ' + fp)
 
         with open(fp) as p:
             for i, line in enumerate(p):
