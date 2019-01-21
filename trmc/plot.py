@@ -3,6 +3,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter, FuncFormatter
 
+from matplotlib import animation, rc
+from IPython.display import HTML
+
 
 class exp_formatter(): 
     """used to format exponentials of ticks"""
@@ -117,3 +120,50 @@ def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
     fig.suptitle('Delta V taken at ' + str(timesel) + 's for sample ' + str(sample))
     
     return fig, axes
+
+
+# First set up the figure, the axis, and the plot element we want to animate
+
+def sweepfitanim(dst,interval = 50):
+
+    fittimes = dst.indexes['time']
+    RawData_Frames = dst['vss'].loc[:,fittimes]
+    RawData_Frames_fit = dst['fits'].loc[:,fittimes]
+
+    # interval = 50
+    xs = dst.indexes['freq']
+
+    fig = plt.figure()
+    ax = plt.axes(xlim=(xs[0], xs[-1]), ylim = (0.005,0.025))
+
+    line, = ax.plot([], [], lw=2, marker = 'o')
+    line_fit, = ax.plot([], [], lw=2, color = 'r')
+
+    time_template = 'Time = %.1fns'
+    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+
+    fig.tight_layout()
+
+    # initialization function: plot the background of each frame
+    def init():
+        line.set_data([], [])
+        line_fit.set_data([], [])
+        time_text.set_text('')
+        ax.set_ylabel("Voltage (V)")
+        ax.set_xlabel("Frequency (Hz)") 
+        return line,line_fit
+
+    # animation function.  This is called sequentially
+    def animate(i):
+        line.set_data(xs, RawData_Frames.loc[:,fittimes[i]])
+        line_fit.set_data(xs, RawData_Frames_fit.loc[:,fittimes[i]])
+        time_text.set_text(time_template % int(fittimes[i]*1e9))
+        return line, time_text
+
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+                                   frames=len(fittimes), interval = interval, blit=True)
+
+    rc('animation', html='html5')
+
+    return anim

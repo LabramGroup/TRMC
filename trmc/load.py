@@ -2,7 +2,53 @@ import os
 import pandas as pd
 import numpy as np
 import re
+import xarray as xr
 
+
+def loadsweep(fp,defaultV = 0.025):
+    """Load in cavity sweep. defaultV if bad csv file saved. """ 
+    df = pd.read_csv(fp,index_col=False)
+    
+    if 'Experimental R' in df.columns:
+        df = pd.read_csv(fp,index_col=False)
+        df = df.set_index(df['f(Ghz)'])
+        s = df[' Vsignal(V)']
+    else:
+        df = pd.read_csv(fp, index_col = 0, skiprows = 4)
+        s = df['Reflectivity']*defaultV
+    return s
+
+
+
+#Load in cavity sweeeps
+def sweeps2ds(fps):
+    """load in all cavity sweeps in filepath dict"""
+    regex = 'Sweep_(\d+)ms(.+)exp.csv'
+
+    das = []
+    for samp in fps:
+        direc = fps[samp]
+        fns = os.listdir(direc)
+        for fn in fns:
+            m = re.search(regex,fn)
+            if m is None:
+                pass
+            else:
+                fp = os.path.join(direc,fn)
+                swtime = int(m.groups()[0])
+                tc = m.groups()[1]            
+
+                s = loadsweep(fp)
+                s = s.rename(s.name.replace(' ', ''))
+                s.index = s.index.rename('freq')
+                da = xr.DataArray.from_series(s)
+                da = da.assign_coords(sample = samp).expand_dims('sample')
+                da = da.assign_coords(tc = tc).expand_dims('tc')
+                da = da.assign_coords(swtime= swtime).expand_dims('swtime')
+                das.append(da)
+
+    ds = xr.merge(das)
+    return ds
 
 def read_params(filepath):
     """Read the amplification and background voltage from the header of a file"""

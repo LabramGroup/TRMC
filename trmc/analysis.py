@@ -4,6 +4,23 @@ import numpy as np
 import re
 
 
+def fitsweep(v, p0, bounds, window, fittype, p_labels):
+    if fittype == 'lor':
+        
+        xdata = v.indexes['freq']
+        ydata = v.values
+        v_p, v_sl = fit_lor(xdata,ydata, p0,bounds, window)
+        v_fit = lorfn(*v_p)
+
+    elif fittype == 'poly':
+        
+        v_p, v_sl = fit_poly2(v, p0, bounds , window)
+        v_fit = poly2fn(*v_p)
+        minR, minf = polymin(v, v_sl, v_fit)
+        v_p = [minR, minf, *v_p]
+
+    return v_fit, v_p, v_sl
+
 def convert_V2cond(df_V,back_V,K):
     df_cond = - ((df_V)/back_V)/K
     return df_cond
