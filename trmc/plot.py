@@ -12,7 +12,7 @@ class exp_formatter():
     def __init__(self,exponent):
         self.exponent = exponent
     
-    def format_func(self,value, tick_number):
+    def func(self,value, tick_number):
         return ("{:0=1.0f}").format(value/10**self.exponent)
 #         return ("{:0=1.0f}e" + str(self.exponent)).format(value/10**self.exponent)
 
@@ -22,7 +22,7 @@ def dvcolorplot(sweep, dvs , levels = list(np.arange(-3.1e-3,3.1e-3,1e-5))):
     """
     Color plot of delta v vs time and freq
     
-    Data input  is one cavity sweep and a  multindex Series for deltaVs with time and freq as levels
+    Data input  is one $V_{bg}(\omega)$ and a  multindex Series for deltaVs with time and freq as levels
     """
     
     freq = dvs.index.levels[1]
@@ -90,34 +90,35 @@ def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
     
     timesel = min(times, key=lambda x:abs(x-timesel))
 
-    fig, axes = plt.subplots(2,1, figsize = (7,10), sharex = True)
+    fig, axes = plt.subplots(2,1, figsize = (10,15), sharex = True)
+
     axes[0].axhline(0, color = 'gray', linestyle = '--')
-    axes[0].plot(dvs.loc[:,timesel].to_series(), marker = 'o')
+    axes[0].plot(dvs.loc[:,timesel].to_series(), marker = 'o', label = '$\Delta V(\omega)$')
 
     if v0 is not None:
         v0 = v0.to_series()
-        axes[1].plot(v0, label = 'cavity sweep', marker = 'o')
+        axes[1].plot(v0, label = '$V_{bg}(\omega)$', marker = 'o')
         axes[1].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
         axes[0].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
     if v0_fit is not None:
-        axes[1].plot(v0_fit.to_series(), label = 'cavity sweep fit')
+        axes[1].plot(v0_fit.to_series(), label = '$V_{bg}(\omega)$ fit')
         
     
     if vss is not None:
-        axes[1].plot(vss.loc[:,timesel].to_series(), color = 'r', label = 'cavity sweep + deltaV' ,  marker = 'o')
+        axes[1].plot(vss.loc[:,timesel].to_series(), color = 'r', label = '$V_{bg}(\omega)$ +  $\Delta V(\omega)$' ,  marker = 'o')
 #         print(vss.loc[:,timesel].to_series())
     if fits is not None:
-        axes[1].plot(fits.loc[:,timesel].to_series(), label = 'cavity sweep + deltaV fit')
+        axes[1].plot(fits.loc[:,timesel].to_series(), label = '$V_{bg}(\omega)$ + $\Delta V(\omega)$ fit')
 #         print(fits.loc[:,timesel].to_series())
 
-    axes[0].set_ylabel('Delta V (V)')
+    axes[0].set_ylabel('$\Delta V(\omega)$ (V)')
     axes[1].set_ylabel('$V_r$ (V)')
     axes[1].set_xlabel('Frequency (Hz)')
 
     # axes[1].set_xlim([8.525e9,8.545e9])
     # axes[1].set_ylim([0.4,0.8])
 
-    fig.suptitle('Delta V taken at ' + str(timesel) + 's for sample ' + str(sample))
+    fig.suptitle('$\Delta V(\omega)$ taken at ' + str(timesel) + 's for sample ' + str(sample))
     
     return fig, axes
 
