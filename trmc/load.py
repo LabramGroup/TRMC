@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 import xarray as xr
+from IPython.display import clear_output
 
 
 def loadsweep(fp,defaultV = 0.025):
@@ -92,13 +93,15 @@ def freqfluence_flist(direc):
             #if file[0] == 'F':
             m_file = re.search(file_re, fn)
             if m_file is None:
+                clear_output()
                 print("no match for file " + fn)
-            fluence = float(m_file.groups(0)[0])
+            else:
+                fluence = float(m_file.groups(0)[0])
 
-            fp = os.path.join(folderpath,fn)
+                fp = os.path.join(folderpath,fn)
 
-            miarray.append((direction,freq,fluence))
-            flist.append(fp)
+                miarray.append((direction,freq,fluence))
+                flist.append(fp)
 
 
     mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq','fluence'])
@@ -107,6 +110,33 @@ def freqfluence_flist(direc):
     
     return s_fps
 
+def freqdcs_flist(direc):
+    """Creates a multindexed Series of filepaths from a frequency dark cavity sweep folder"""
+    folders = os.listdir(direc)
+    miarray = []
+    folder_re = '^(\d+\.\d+)GHz_(.+?)'
+    # file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv'
+
+    flist = []
+
+    for folder in folders:
+        m_folder = re.search(folder_re,folder)
+        freq = float(m_folder.groups(0)[0])*1e9
+        direction = m_folder.groups(0)[1]
+        folderpath = os.path.join(direc,folder)
+        fns = os.listdir(folderpath)
+        for fn in fns:
+            if fn == 'FreqSweep_DarkCavitySweep_exp.csv':
+                fp = os.path.join(folderpath,fn)
+                miarray.append((direction,freq))
+                flist.append(fp)
+
+
+    mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq'])
+
+    s_fps = pd.Series(flist, index = mi)
+    
+    return s_fps
 
 def freqfluence_load(s_fps):
     """Takes in a frequecny fluence sweep filepath Series and loads into a data Series"""
