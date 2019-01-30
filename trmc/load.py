@@ -138,6 +138,8 @@ def freqdcs_flist(direc):
     
     return s_fps
 
+
+import itertools
 def freqfluence_load(s_fps):
     """Takes in a frequecny fluence sweep filepath Series and loads into a data Series"""
     direcs = set(s_fps.index.levels[0])
@@ -146,14 +148,16 @@ def freqfluence_load(s_fps):
     
     mi = s_fps.index
     time_arr = load_trace(s_fps.iloc[0]).index.values
-    miarray_t = []
-    for tup in mi:
-        for time in time_arr:
-            miarray_t.append((*tup,time))
+    miarray_t = itertools.product(direcs,freqs,fluences,time_arr)
+    # miarray_t = []
+    # for tup in mi:
+    #     for time in time_arr:
+    #         miarray_t.append((*tup,time))
 
     mi_t = pd.MultiIndex.from_tuples(miarray_t, names = ['direction','freq','fluence','time'])    
     
-    data = np.zeros([len(direcs)*len(freqs)*len(fluences),len(time_arr)])
+    shape = [len(direcs)*len(freqs)*len(fluences),len(time_arr)]
+    data = np.full(shape, np.nan)
 
     backvs = []
     lowpow = min(fluences)
@@ -239,3 +243,15 @@ def load_fluence(filepath):
     fluencesweep = pd.read_csv(filepath, skiprows = 13)
     fluences = fluencesweep['Fluence(cm^-2)']
     return fluences
+
+
+
+# basedir = '\\\\depot.engr.oregonstate.edu\\users\\coe_apirate\\Windows.Documents\\Desktop\\Data'
+# sampledir = os.path.join(basedir,'20190128\Bi_A_2')
+# sampdict = {'s' :sampledir}
+
+# direc = os.path.join(sampledir,'FreqFluence')
+
+# s_fps = freqfluence_flist(direc)
+
+# s,backvs = freqfluence_load(s_fps)
