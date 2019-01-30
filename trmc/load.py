@@ -146,7 +146,9 @@ def freqfluence_load(s_fps):
     freqs = sorted(set(s_fps.index.levels[1]))
     fluences = sorted(set(s_fps.index.levels[2]))
     
-    mi = s_fps.index
+    miarray = itertools.product(direcs,freqs,fluences)
+    mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq','fluence'])    
+    # mi = s_fps.index
     time_arr = load_trace(s_fps.iloc[0]).index.values
     miarray_t = itertools.product(direcs,freqs,fluences,time_arr)
     # miarray_t = []
@@ -154,12 +156,14 @@ def freqfluence_load(s_fps):
     #     for time in time_arr:
     #         miarray_t.append((*tup,time))
 
+    data_bv = np.full([len(direcs)*len(freqs)*len(fluences)], np.nan)
+
     mi_t = pd.MultiIndex.from_tuples(miarray_t, names = ['direction','freq','fluence','time'])    
     
     shape = [len(direcs)*len(freqs)*len(fluences),len(time_arr)]
     data = np.full(shape, np.nan)
 
-    backvs = []
+    # backvs = []
     lowpow = min(fluences)
     
     re_backV = "^Background Voltage,-(\d+\.\d+)(.)V"
@@ -181,8 +185,8 @@ def freqfluence_load(s_fps):
                     print('subtraction failed for ' + fp)
 
             with open(fp) as p:
-                for i, line in enumerate(p):
-                    if i == 11:
+                for n, line in enumerate(p):
+                    if n == 11:
                         m = re.search(re_backV,line)
                         if m == None:
                             m = re.search(re_backV2,line)
@@ -192,14 +196,14 @@ def freqfluence_load(s_fps):
                         elif m.groups()[1] == 'µ':
                             fac = 1e-6
 
-
-                        backvs.append(float(m.groups()[0])*fac)
+                        data_bv[i] = float(m.groups()[0])*fac
+                        # backvs.append(float(m.groups()[0])*fac)
 
     data = data.flatten()
     
     s = pd.Series(data,index = mi_t)
     
-    backvs = pd.Series(backvs,index = mi).xs(mi.levels[2][-1],level =2)
+    backvs = pd.Series(data_bv,index = mi).xs(mi.levels[2][-1],level =2)
     
     return s,backvs
 
