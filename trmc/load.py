@@ -143,8 +143,8 @@ import itertools
 def freqfluence_load(s_fps):
     """Takes in a frequecny fluence sweep filepath Series and loads into a data Series"""
     direcs = set(s_fps.index.levels[0])
-    freqs = set(s_fps.index.levels[1])
-    fluences = set(s_fps.index.levels[2])
+    freqs = sorted(set(s_fps.index.levels[1]))
+    fluences = sorted(set(s_fps.index.levels[2]))
     
     mi = s_fps.index
     time_arr = load_trace(s_fps.iloc[0]).index.values
@@ -166,33 +166,34 @@ def freqfluence_load(s_fps):
     re_backV2 = "^Background Voltage,-(\d+)(.)V"
 
     lp = 0
-    for i, tup in enumerate(mi):
+    for i, tup in enumerate(itertools.product(direcs,freqs,fluences)):
         direc, freq, fluence = tup
-        fp = s_fps[direc,freq,fluence]
-        if(fluence == lowpow):
-            lp = load_trace(fp,50e-9).values
-            data[i,:] = lp - lp
-        else:
-            d = load_trace(fp,50e-9).values
-            try:
-                data[i,:] = d - lp
-            except:
-                print('subtraction failed for ' + fp)
+        if tup in s_fps:
+            fp = s_fps[direc,freq,fluence]
+            if(fluence == lowpow):
+                lp = load_trace(fp,50e-9).values
+                data[i,:] = lp - lp
+            else:
+                d = load_trace(fp,50e-9).values
+                try:
+                    data[i,:] = d - lp
+                except:
+                    print('subtraction failed for ' + fp)
 
-        with open(fp) as p:
-            for i, line in enumerate(p):
-                if i == 11:
-                    m = re.search(re_backV,line)
-                    if m == None:
-                        m = re.search(re_backV2,line)
+            with open(fp) as p:
+                for i, line in enumerate(p):
+                    if i == 11:
+                        m = re.search(re_backV,line)
+                        if m == None:
+                            m = re.search(re_backV2,line)
 
-                    if m.groups()[1] == 'm':
-                        fac = 1e-3
-                    elif m.groups()[1] == 'µ':
-                        fac = 1e-6
+                        if m.groups()[1] == 'm':
+                            fac = 1e-3
+                        elif m.groups()[1] == 'µ':
+                            fac = 1e-6
 
 
-                    backvs.append(float(m.groups()[0])*fac)
+                        backvs.append(float(m.groups()[0])*fac)
 
     data = data.flatten()
     
