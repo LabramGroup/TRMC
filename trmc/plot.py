@@ -168,3 +168,38 @@ def sweepfitanim(dst,interval = 50):
     rc('animation', html='html5')
 
     return anim
+
+def redbluetransient(ax,data,f0):
+    freqs = data.indexes['freq']
+    labeledblue = False
+    labeledred = False
+    for freq in freqs:
+        if freq < f0:
+            color = 'b'
+            if labeledblue:
+                label = None
+            else:
+                label = 'Frequency Below Resonance'
+                labeledblue = True
+        elif freq > f0:
+            color = 'r'
+            if labeledred:
+                label = None
+            else:
+                label = 'Frequency Above Resonance'
+                labeledred = True
+        elif freq == f0:
+            color = 'g'
+            label = 'On resonance'
+        trace = data.sel(freq = freq)
+        ax.plot(trace.to_series(), color = color, label = label)
+
+    ax.xaxis.set_major_formatter(FuncFormatter(exp_formatter(-9).func))
+
+    # ax.set_xlim(200e-9,400e-9)
+    # ax.set_ylim([-0.002,0.002])
+    ax.set_xlabel('Time (ns)')
+    ax.set_ylabel('Voltage (V)')
+
+
+    return ax
