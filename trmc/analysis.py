@@ -6,7 +6,9 @@ import re
 
 def fitsweep(v, p0, bounds, window, fittype, p_labels):
     if fittype == 'lor':
-        
+        if p0[0] == None:
+            f0 = v.to_series().idxmin()
+            p0[0] = f0
         xdata = v.indexes['freq']
         ydata = v.values
         v_p, v_sl = fit_lor(xdata,ydata, p0,bounds, window)
