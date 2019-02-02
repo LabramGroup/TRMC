@@ -79,48 +79,84 @@ def absplot(dvs):
     ax.xaxis.set_major_formatter(FuncFormatter(expf.format_func))
     return fig, ax
 
-def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
-    timesel = timesel *1e-9
-    if fits is not None:
-        times = fits.indexes['time']
-        sample = fits.sample.values
-    elif vss is not None:
-        times = vss.indexes['time']
-        sample = vss.sample.values
+import pandas as pd
+
+def vsplotxr(dv, vs = None, fit = None, v0 = None, fit_v0 = None , plotkwargs = {}):
+    """wants single indexed da objects wrt frequency"""
+    fig, axes = plt.subplots(2,1, sharex = True, **plotkwargs)
     
-    timesel = min(times, key=lambda x:abs(x-timesel))
-
-    fig, axes = plt.subplots(2,1, figsize = (10,15), sharex = True)
-
     axes[0].axhline(0, color = 'gray', linestyle = '--')
-    axes[0].plot(dvs.loc[:,timesel].to_series(), marker = 'o', label = '$\Delta V(\omega)$')
+    l_dv = axes[0].plot(dv.to_series(), marker = 'o', label = '$\Delta V(\omega)$')
 
     if v0 is not None:
         v0 = v0.to_series()
         axes[1].plot(v0, label = '$V_{bg}(\omega)$', marker = 'o')
         axes[1].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
         axes[0].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
-    if v0_fit is not None:
-        axes[1].plot(v0_fit.to_series(), label = '$V_{bg}(\omega)$ fit')
+    if fit_v0 is not None:
+        axes[1].plot(fit_v0.to_series(), label = '$V_{bg}(\omega)$ fit')
         
     
-    if vss is not None:
-        axes[1].plot(vss.loc[:,timesel].to_series(), color = 'r', label = '$V_{bg}(\omega)$ +  $\Delta V(\omega)$' ,  marker = 'o')
-#         print(vss.loc[:,timesel].to_series())
-    if fits is not None:
-        axes[1].plot(fits.loc[:,timesel].to_series(), label = '$V_{bg}(\omega)$ + $\Delta V(\omega)$ fit')
-#         print(fits.loc[:,timesel].to_series())
+    if vs is not None:
+        l_vss = axes[1].plot(vs.to_series(), color = 'r', label = '$V_{bg}(\omega)$ +  $\Delta V(\omega)$' ,  marker = 'o')
+    if fit is not None:
+        l_fit = axes[1].plot(fit.to_series(), label = '$V_{bg}(\omega)$ + $\Delta V(\omega)$ fit')
 
+    lns = [l_dv, l_vss, l_fit]
+    lns = pd.Series(lns,index = ['dvs','vss','fits'])
+    
     axes[0].set_ylabel('$\Delta V(\omega)$ (V)')
     axes[1].set_ylabel('$V_r$ (V)')
     axes[1].set_xlabel('Frequency (Hz)')
 
-    # axes[1].set_xlim([8.525e9,8.545e9])
-    # axes[1].set_ylim([0.4,0.8])
-
-    fig.suptitle('$\Delta V(\omega)$ taken at ' + str(timesel) + 's for sample ' + str(sample))
     
-    return fig, axes
+    fig.legend()
+    return fig, axes, lns
+
+
+
+# def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
+#     timesel = timesel *1e-9
+#     if fits is not None:
+#         times = fits.indexes['time']
+#         sample = fits.sample.values
+#     elif vss is not None:
+#         times = vss.indexes['time']
+#         sample = vss.sample.values
+    
+#     timesel = min(times, key=lambda x:abs(x-timesel))
+
+#     fig, axes = plt.subplots(2,1, figsize = (10,15), sharex = True)
+
+#     axes[0].axhline(0, color = 'gray', linestyle = '--')
+#     axes[0].plot(dvs.loc[:,timesel].to_series(), marker = 'o', label = '$\Delta V(\omega)$')
+
+#     if v0 is not None:
+#         v0 = v0.to_series()
+#         axes[1].plot(v0, label = '$V_{bg}(\omega)$', marker = 'o')
+#         axes[1].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
+#         axes[0].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
+#     if v0_fit is not None:
+#         axes[1].plot(v0_fit.to_series(), label = '$V_{bg}(\omega)$ fit')
+        
+    
+#     if vss is not None:
+#         axes[1].plot(vss.loc[:,timesel].to_series(), color = 'r', label = '$V_{bg}(\omega)$ +  $\Delta V(\omega)$' ,  marker = 'o')
+# #         print(vss.loc[:,timesel].to_series())
+#     if fits is not None:
+#         axes[1].plot(fits.loc[:,timesel].to_series(), label = '$V_{bg}(\omega)$ + $\Delta V(\omega)$ fit')
+# #         print(fits.loc[:,timesel].to_series())
+
+#     axes[0].set_ylabel('$\Delta V(\omega)$ (V)')
+#     axes[1].set_ylabel('$V_r$ (V)')
+#     axes[1].set_xlabel('Frequency (Hz)')
+
+#     # axes[1].set_xlim([8.525e9,8.545e9])
+#     # axes[1].set_ylim([0.4,0.8])
+
+#     fig.suptitle('$\Delta V(\omega)$ taken at ' + str(timesel) + 's for sample ' + str(sample))
+    
+#     return fig, axes
 
 
 # First set up the figure, the axis, and the plot element we want to animate
