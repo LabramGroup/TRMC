@@ -12,7 +12,8 @@ def fitsweep(v, p0, bounds, window, fittype, p_labels):
         xdata = v.indexes['freq']
         ydata = v.values
         v_p, v_sl = fit_lor(xdata,ydata, p0,bounds, window)
-        v_fit = lorfn(*v_p)
+        popt = v_p[0]
+        v_fit = lorfn(*v_p[0])
 
     elif fittype == 'poly':
         
@@ -112,8 +113,8 @@ def fit_lor(xdata,ydata, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf])
 
     sl = slice(minidx-window,minidx+window+1)
     popt,popc = scipy.optimize.curve_fit(lor,xdata[sl],ydata[sl], p0 , bounds = bounds)
-
-    return popt, sl
+    p = (popt,popc)
+    return p, sl
 
 def poly2(x,c0,c1,c2):
     return c0 + c1*x + c2*x**2
