@@ -239,3 +239,24 @@ def redbluetransient(ax,data,f0):
 
 
     return ax
+
+
+def dropna_ln(ln):
+    """drops na for traces on a facet grid"""
+    d = ln.get_data()
+    s = pd.Series(d[1],index = d[0]).dropna()
+    ln.set_data([s.index,s.values])
+    
+def inter_vsplot(timesel,dst_samp,lns,fig):
+    times = dst_samp.indexes['time']
+    sample = dst_samp.coords['sample'].values.item()
+    timesel = timesel*1e-9
+    timesel = min(times, key=lambda x:abs(x-timesel))
+    
+    for name in lns.index:
+        l = lns[name][0]
+        data = dst_samp[name].sel(time = timesel,method = 'nearest')
+        l.set_ydata(data)
+        
+    fig.suptitle('Sample : ' + str(sample) +  '\n$\Delta V(\omega)$ taken at ' + str(int(timesel*1e9))+ 'ns')
+    fig.canvas.draw()
