@@ -260,6 +260,28 @@ def dict_product(dicts):
     """
     return (dict(zip(dicts, x)) for x in itertools.product(*dicts.values()))
 
+def gen_seldicts(da, keys, check_empty = True):
+    idxs = {key : da.indexes[key] for key in keys}
+    seldicts = list(dict_product(idxs))
+    
+    seldicts_red = []    
+    if check_empty:
+        for i, seldict in enumerate(seldicts):
+            t = da.sel(seldict)
+            if np.isnan(t).all().item() is False:
+                seldicts_red.append(seldict)
+        
+        seldicts = seldicts_red
+        
+        #Old method...think this fix some issue that came up at some point but can't remember
+#         seldicts_red = []   
+#         for i, seldict in enumerate(seldicts):
+#             t = da.sel(seldict).dropna('time').to_series()
+#             if len(t) != 0:
+#                 seldicts_red.append(seldict)
+#         seldicts = seldicts_red
+
+    return seldicts
 
 
 # basedir = '\\\\depot.engr.oregonstate.edu\\users\\coe_apirate\\Windows.Documents\\Desktop\\Data'
