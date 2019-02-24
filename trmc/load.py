@@ -22,9 +22,8 @@ def loadsweep(fp,defaultV = 0.025):
 
 
 #Load in cavity sweeeps
-def sweeps2ds(fps):
+def sweeps2ds(fps, regex = 'Sweep_(\d+)ms(.+)exp.csv'):
     """load in all cavity sweeps in filepath dict"""
-    regex = 'Sweep_(\d+)ms(.+)exp.csv'
 
     das = []
     for samp in fps:
