@@ -241,11 +241,7 @@ def redbluetransient(ax,data,f0):
     return ax
 
 
-def dropna_ln(ln):
-    """drops na for traces on a facet grid"""
-    d = ln.get_data()
-    s = pd.Series(d[1],index = d[0]).dropna()
-    ln.set_data([s.index,s.values])
+
     
 def inter_vsplot(timesel,dst_samp,lns,fig):
     times = dst_samp.indexes['time']
@@ -260,3 +256,25 @@ def inter_vsplot(timesel,dst_samp,lns,fig):
         
     fig.suptitle('Sample : ' + str(sample) +  '\n$\Delta V(\omega)$ taken at ' + str(int(timesel*1e9))+ 'ns')
     fig.canvas.draw()
+
+def dropna_ln(ln):
+    """drops na for traces on a facet grid"""
+    d = ln.get_data()
+    s = pd.Series(d[1],index = d[0]).dropna()
+    ln.set_data([s.index,s.values])
+
+def removena_axes(ax):
+    """Iterates through all lines in a plot and removes na values"""
+    lns = ax.lines
+    for ln in lns:
+        dropna_ln(ln)
+
+
+def get_label_for_line(line):
+    """Can't remember what I was using this for but seems useful to keep"""
+    leg = line.figure.legends[0]
+#     leg = line.axes.get_legend()
+    for h, t in zip(leg.legendHandles, leg.texts):
+        if h.get_label() == line.get_label():
+            return t.get_text()
+        
