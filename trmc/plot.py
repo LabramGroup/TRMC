@@ -84,13 +84,22 @@ import pandas as pd
 def vsplotxr(dv, vs = None, fit = None, v0 = None, fit_v0 = None , plotkwargs = {}):
     """wants single indexed da objects wrt frequency"""
     fig, axes = plt.subplots(2,1, sharex = True, **plotkwargs)
+
+    
     
     axes[0].axhline(0, color = 'gray', linestyle = '--')
     l_dv = axes[0].plot(dv.to_series(), marker = 'o', label = '$\Delta V(\omega)$')
+    
+    # buffer = (dv.max() - dv.min())/10
+    # axes[0].set_ylim([dv.min()- buffer,dv.max()+buffer])
+
+
+    lns = [l_dv]
+    lns_names = ['dvs']
 
     if v0 is not None:
         v0 = v0.to_series()
-        axes[1].plot(v0, label = '$V_{bg}(\omega)$', marker = 'o')
+        axes[1].plot(v0, label = '$V_{bg}(\omega)$', marker = 'o', color = 'green')
         axes[1].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
         axes[0].axvline(v0.idxmin(), color = 'gray', linestyle = '--')
     if fit_v0 is not None:
@@ -98,22 +107,44 @@ def vsplotxr(dv, vs = None, fit = None, v0 = None, fit_v0 = None , plotkwargs = 
         
     
     if vs is not None:
+        
         l_vss = axes[1].plot(vs.to_series(), color = 'r', label = '$V_{bg}(\omega)$ +  $\Delta V(\omega)$' ,  marker = 'o')
+        lns.append(l_vss)
+        lns_names.append('vss')
     if fit is not None:
         l_fit = axes[1].plot(fit.to_series(), label = '$V_{bg}(\omega)$ + $\Delta V(\omega)$ fit')
+        lns.append(l_fit)
+        lns_names.append('fits')
 
-    lns = [l_dv, l_vss, l_fit]
-    lns = pd.Series(lns,index = ['dvs','vss','fits'])
+    # lns = [l_dv, l_vss, l_fit]
+    lns = pd.Series(lns,index = lns_names)
     
-    axes[0].set_ylabel('$\Delta V(\omega)$ (V)')
-    axes[1].set_ylabel('$V_r$ (V)')
+
+    axes[0].yaxis.set_major_formatter(FuncFormatter(exp_formatter(-6).func))
+    axes[0].set_ylabel('$\Delta V(\omega) (\mu V)$')
+    axes[1].yaxis.set_major_formatter(FuncFormatter(exp_formatter(-3).func))
+    axes[1].set_ylabel('$V_r$ (mV)')
     axes[1].set_xlabel('Frequency (Hz)')
 
     
     fig.legend()
+    fig.tight_layout(rect=[0.05, 0.0, 0.75, 0.9])
+
     return fig, axes, lns
 
-
+def inter_vsplot(timesel,dst_samp,lns,fig):
+    times = dst_samp.indexes['time']
+    sample = dst_samp.coords['sample'].values.item()
+    timesel = timesel*1e-9
+    timesel = min(times, key=lambda x:abs(x-timesel))
+    
+    for name in lns.index:
+        l = lns[name][0]
+        data = dst_samp[name].sel(time = timesel,method = 'nearest')
+        l.set_ydata(data)
+        
+    fig.suptitle('Sample : ' + str(sample) +  '\n$\Delta V(\omega)$ taken at ' + str(int(timesel*1e9))+ 'ns')
+    fig.canvas.draw()
 
 # def vsplotxr(timesel, dvs, vss = None, fits = None, v0 = None, v0_fit = None):
 #     timesel = timesel *1e-9
@@ -243,19 +274,7 @@ def redbluetransient(ax,data,f0):
 
 
     
-def inter_vsplot(timesel,dst_samp,lns,fig):
-    times = dst_samp.indexes['time']
-    sample = dst_samp.coords['sample'].values.item()
-    timesel = timesel*1e-9
-    timesel = min(times, key=lambda x:abs(x-timesel))
-    
-    for name in lns.index:
-        l = lns[name][0]
-        data = dst_samp[name].sel(time = timesel,method = 'nearest')
-        l.set_ydata(data)
-        
-    fig.suptitle('Sample : ' + str(sample) +  '\n$\Delta V(\omega)$ taken at ' + str(int(timesel*1e9))+ 'ns')
-    fig.canvas.draw()
+
 
 def dropna_ln(ln):
     """drops na for traces on a facet grid"""
