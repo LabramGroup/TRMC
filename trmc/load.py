@@ -73,19 +73,26 @@ def load_trace(filepath,offsettime = None):
     # time = volt.index
 
 
-def freqfluence_flist(direc):
+def freqfluence_flist(direc,direction_used = True):
     """Creates a multindexed Series of filepaths from a frequency fluence sweep folder"""
     folders = os.listdir(direc)
     miarray = []
-    folder_re = '^(\d+\.\d+)GHz_(.+?)'
+    if direction_used:
+        folder_re = '^(\d+\.\d+)GHz_(.+?)'
+    else:
+        folder_re = '^(\d+\.\d+)GHz'
     file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv'
 
     flist = []
 
     for folder in folders:
+
         m_folder = re.search(folder_re,folder)
+        print(folder)
+
         freq = float(m_folder.groups(0)[0])*1e9
-        direction = m_folder.groups(0)[1]
+        
+        direction = m_folder.groups(0)[1] if direction_used else 'U'
         folderpath = os.path.join(direc,folder)
         fns = os.listdir(folderpath)
         for fn in fns:
