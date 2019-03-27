@@ -22,8 +22,10 @@ def loadsweep(fp,defaultV = 0.025):
 
 
 #Load in cavity sweeeps
-def sweeps2ds(fps, regex = 'Sweep_(\d+)ms(.+)exp.csv'):
+def sweeps2ds(fps, regex = 'Sweep_(\d+)ms(.+)exp.csv', groupnames = ['swtime','tc']):
     """load in all cavity sweeps in filepath dict"""
+
+    
 
     das = []
     for samp in fps:
@@ -35,16 +37,23 @@ def sweeps2ds(fps, regex = 'Sweep_(\d+)ms(.+)exp.csv'):
                 pass
             else:
                 fp = os.path.join(direc,fn)
-                swtime = int(m.groups()[0])
-                tc = m.groups()[1]            
+      
 
                 s = loadsweep(fp)
                 s = s.rename(s.name.replace(' ', ''))
                 s.index = s.index.rename('freq')
                 da = xr.DataArray.from_series(s)
                 da = da.assign_coords(sample = samp).expand_dims('sample')
-                da = da.assign_coords(tc = tc).expand_dims('tc')
-                da = da.assign_coords(swtime= swtime).expand_dims('swtime')
+
+                # swtime = int(m.groups()[0])
+                # tc = m.groups()[1]
+
+                for i, nm in enumerate(groupnames):
+                    # d = {name :m.groups()[i]}
+                    da = da.assign_coords(temp = m.groups()[i]).expand_dims('temp')
+                    da = da.rename({'temp':nm})
+                # da = da.assign_coords(tc = tc).expand_dims('tc')
+                # da = da.assign_coords(swtime= swtime).expand_dims('swtime')
                 das.append(da)
 
     ds = xr.merge(das)
@@ -146,7 +155,7 @@ def freqdcs_flist(direc):
 
 
 import itertools
-def freqfluence_load(s_fps):
+def freqfluence_load(s_fps, sub_lowpow = True):
     """Takes in a frequecny fluence sweep filepath Series and loads into a data Series"""
     direcs = set(s_fps.index.levels[0])
     freqs = sorted(set(s_fps.index.levels[1]))
@@ -182,13 +191,16 @@ def freqfluence_load(s_fps):
             fp = s_fps[direc,freq,fluence]
             if(fluence == lowpow):
                 lp = load_trace(fp,50e-9).values
-                data[i,:] = lp - lp
-            else:
-                d = load_trace(fp,50e-9).values
+                # data[i,:] = lp - lp
+
+            d = load_trace(fp,50e-9).values
+            if sub_lowpow:
                 try:
                     data[i,:] = d - lp
                 except:
                     print('subtraction failed for ' + fp)
+            else:
+                data[i,:] = d 
 
             with open(fp) as p:
                 for n, line in enumerate(p):
