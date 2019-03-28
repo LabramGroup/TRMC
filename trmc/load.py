@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import pandas as pd
 import numpy as np
@@ -82,7 +83,7 @@ def load_trace(filepath,offsettime = None):
     # time = volt.index
 
 
-def freqfluence_flist(direc,direction_used = True):
+def freqfluence_flist(direc,file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv', file_groupnames = ['fluence'], direction_used = True):
     """Creates a multindexed Series of filepaths from a frequency fluence sweep folder"""
     folders = os.listdir(direc)
     miarray = []
@@ -90,7 +91,6 @@ def freqfluence_flist(direc,direction_used = True):
         folder_re = '^(\d+\.\d+)GHz_(.+?)'
     else:
         folder_re = '^(\d+\.\d+)GHz'
-    file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv'
 
     flist = []
 
@@ -111,15 +111,15 @@ def freqfluence_flist(direc,direction_used = True):
                 clear_output()
                 print("no match for file " + fn)
             else:
-                fluence = float(m_file.groups(0)[0])
+                # fluence = float(m_file.groups(0)[0])
 
                 fp = os.path.join(folderpath,fn)
 
-                miarray.append((direction,freq,fluence))
+                miarray.append((direction,freq,*m_file.groups()))
                 flist.append(fp)
 
 
-    mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq','fluence'])
+    mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq',*file_groupnames])
 
     s_fps = pd.Series(flist, index = mi)
     
@@ -205,6 +205,10 @@ def freqfluence_load(s_fps, sub_lowpow = True):
             with open(fp) as p:
                 for n, line in enumerate(p):
                     if n == 11:
+                        # line = line.encode('utf-8')
+                        if 'Â' in line:
+                            line = line.replace('Â', '')
+
                         m = re.search(re_backV,line)
                         if m == None:
                             m = re.search(re_backV2,line)
