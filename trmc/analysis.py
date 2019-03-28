@@ -78,6 +78,15 @@ def fitsweep(v, p0, bounds, window, fittype, p_labels):
         popt = v_p[0]
         v_fit = lorfn(*popt)
 
+    if fittype == 'lorline':
+        if p0[0] == None:
+            f0 = v.to_series().idxmin()
+            p0[0] = f0
+
+        v_p, v_sl = fit_lor_line(xdata,ydata, p0,bounds, window)
+        popt = v_p[0]
+        v_fit = lor_line_fn(*popt)
+
     elif fittype == 'poly':
         
         v_p, v_sl = fit_poly2(xdata,ydata, p0, bounds , window)
@@ -88,6 +97,29 @@ def fitsweep(v, p0, bounds, window, fittype, p_labels):
         v_p = [[minf,minR, *popt],popc]
 
     return v_fit, v_p, v_sl
+
+
+def fit_lor_line(xdata,ydata, p0, bounds = ([0,0,0, 0, -np.inf,0],[np.inf,np.inf,np.inf,np.inf,np.inf,np.inf]), window = 105):
+    """Fits to lorentzian function and returns parameters"""
+    #xdata = sweep.index.values
+    #ydata = sweep.values
+
+    minidx = ydata.argmin()
+    minfreq = xdata[minidx]
+
+    sl = slice(minidx-window,minidx+window+1)
+    popt,popc = scipy.optimize.curve_fit(lor_line,xdata[sl],ydata[sl], p0 , bounds = bounds)
+    p = (popt,popc)
+    return p, sl
+
+def lor_line(f,f0,R0,Rinf, w, m, b): 
+    return (R0 + Rinf*(2*(f-f0)/w)**2)/(1 + (2*(f-f0)/w)**2) + m*(f - f0) + b
+
+def lor_line_fn(f0,R0,Rinf,w ,m,b): 
+    """retruns a lorentzian function defined by parameters"""
+    def fn(f):
+        return lor_line(f,f0,R0, Rinf,w,m,b)
+    return fn 
 
 def fit_lor(xdata,ydata, p0, bounds = ([0,0,0, 0],[np.inf,np.inf,np.inf,np.inf]), window = 105):
     """Fits to lorentzian function and returns parameters"""
