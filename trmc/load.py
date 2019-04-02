@@ -115,7 +115,10 @@ def freqfluence_flist(direc,file_re = '.*Filter=\d+_Fluence=(.+?)_data.csv', fil
 
                 fp = os.path.join(folderpath,fn)
 
-                miarray.append((direction,freq,*m_file.groups()))
+                #just converting to floats for now....
+                groups_float = [float(s) for s in m_file.groups()]
+
+                miarray.append((direction,freq,*groups_float))
                 flist.append(fp)
 
 
@@ -160,6 +163,7 @@ def freqfluence_load(s_fps, sub_lowpow = True):
     direcs = set(s_fps.index.levels[0])
     freqs = sorted(set(s_fps.index.levels[1]))
     fluences = sorted(set(s_fps.index.levels[2]))
+    
     
     miarray = itertools.product(direcs,freqs,fluences)
     mi = pd.MultiIndex.from_tuples(miarray, names = ['direction','freq','fluence'])    
