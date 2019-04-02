@@ -23,7 +23,7 @@ def offsettime(df, timebefore = 0, timeafter = None):
     df_cut = df_cut.set_index(time[idx1:idx2] - timemax)
     return df_cut
 
-def calc_K(f0,R0_norm,w, printparams = False):   
+def calc_K(f0,R0_norm,w, printparams = False, coupling = 'under'):   
     """Calculate the K value from the lorentzian fit constants""" 
     Q = f0/w
     t_rc = Q/(np.pi*f0)
@@ -36,7 +36,10 @@ def calc_K(f0,R0_norm,w, printparams = False):
     eps_r = 1 #dielectric
     eps_0 = 8.85e-12
     
-    K = ( 2*Q*( 1 + (1/np.sqrt(R0_norm)) ) )/(np.pi*f0*eps_r*eps_0*cav_l*beta)
+    if coupling == 'under':
+        K = -( 2*Q*(( (1/np.sqrt(R0_norm)) - 1 ) ) )/(np.pi*f0*eps_r*eps_0*cav_l*beta)
+    elif coupling == 'over':
+        K = ( 2*Q*(( (1/np.sqrt(R0_norm)) + 1 ) ) )/(np.pi*f0*eps_r*eps_0*cav_l*beta)
     if(printparams):
 #         print('eps: ', "{:.2E}".format(eps))
 #         print('beta: ', "{:.2E}".format(beta))
